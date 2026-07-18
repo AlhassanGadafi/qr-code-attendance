@@ -1,0 +1,20 @@
+<nav class="navbar">
+    <div class="nav-container">
+        <a href="/" class="logo">QR Attendance</a>
+        
+        <div class="nav-links">
+            {% if session.student_logged_in %}
+                <a href="/student/dashboard">Dashboard</a>
+                <a href="/my_attendance">My Attendance</a>
+                <a href="/student/profile">Profile</a>
+            {% elif session.lecturer_logged_in %}
+                <a href="/lecturer/dashboard">Dashboard</a>
+                <a href="/lecturer/generate_qr">Generate QR</a>
+                <a href="/attendance">All Records</a>
+                <a href="/export_attendance">Export</a>
+            {% endif %}
+            
+            <a href="/logout" class="btn btn-danger" style="padding: 8px 18px; font-size: 14px;">Logout</a>
+        </div>
+    </div>
+</nav>

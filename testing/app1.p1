@@ -1,0 +1,230 @@
+from flask import Flask, render_template, request, send_file, redirect, url_for
+import pandas as pd
+
+from flask import Flask, render_template, request, send_file
+import mysql.connector
+import segno
+import os
+from datetime import datetime
+
+app = Flask(__name__)
+
+# ==================== DATABASE CONNECTION ====================
+db = mysql.connector.connect(
+    host="localhost",
+    user="root",
+    password="0509050023",
+    database="qr_attendance_db"
+)
+
+cursor = db.cursor(dictionary=True)
+# ============================================================
+
+QR_FOLDER = os.path.join('static', 'qr_codes')
+os.makedirs(QR_FOLDER, exist_ok=True)
+
+# ====================== ROUTES ======================
+
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+# REGISTER & LOGIN (unchanged)
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        student_id = request.form['student_id']
+        fullname = request.form['fullname']
+        email = request.form['email']
+        password = request.form['password']
+        try:
+            sql = "INSERT INTO students (student_id, fullname, email, password) VALUES (%s, %s, %s, %s)"
+            cursor.execute(sql, (student_id, fullname, email, password))
+            db.commit()
+            return "Registration Successful! <a href='/login'>Go to Login</a>"
+        except Exception as e:
+            return f"Error: {str(e)}"
+    return render_template('register.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+        sql = "SELECT * FROM students WHERE email=%s AND password=%s"
+        cursor.execute(sql, (email, password))
+        user = cursor.fetchone()
+        if user:
+            return f"Welcome {user['fullname']}! <br><br><a href='/dashboard'>Go to Dashboard</a>"
+        else:
+            return "Invalid credentials. <a href='/login'>Try Again</a>"
+    return render_template('login.html')
+
+@app.route('/dashboard')
+def dashboard():
+    return render_template('dashboard.html')
+
+# ===================== GENERATE QR (Auto IP + Clean ID) =====================
+@app.route('/generate_qr', methods=['GET'])
+@app.route('/generate_qr/<student_id>')
+def generate_qr(student_id=None):
+    if not student_id:
+        student_id = request.args.get('student_id')
+        if not student_id:
+            return "Student ID is required", 400
+
+    # Auto get current IP
+    import socket
+    hostname = socket.gethostname()
+    local_ip = socket.gethostbyname(hostname)
+
+    qr_data = f"http://{local_ip}:5000/mark_attendance/{student_id}"
+
+    qr = segno.make_qr(qr_data)
+    
+    # Clean student ID for filename
+    clean_id = str(student_id).replace('/', '_').replace('\\', '_').replace(' ', '_')
+    filename = f"{clean_id}.png"
+    filepath = os.path.join(QR_FOLDER, filename)
+    
+    qr.save(filepath, scale=10)
+    
+    return send_file(filepath, mimetype='image/png')
+
+# ===================== MARK ATTENDANCE (Improved) =====================
+@app.route('/mark_attendance/<student_id>')
+def mark_attendance(student_id):
+    try:
+        # Check if already marked today
+        check_sql = """
+            SELECT * FROM attendance 
+            WHERE student_id = %s AND attendance_date = CURDATE()
+        """
+        cursor.execute(check_sql, (student_id,))
+        if cursor.fetchone():
+            return """
+            <html><body style="text-align:center; margin-top:100px; font-family:Arial;">
+                <h1 style="color:orange;">⚠️ Already Marked</h1>
+                <p>Attendance for today has already been recorded.</p>
+                <a href="javascript:window.close()">Close</a>
+            </body></html>
+            """
+
+        # Get student name
+        cursor.execute("SELECT fullname FROM students WHERE student_id = %s", (student_id,))
+        student = cursor.fetchone()
+        student_name = student['fullname'] if student else student_id
+
+        # Mark attendance
+        sql = """
+            INSERT INTO attendance (student_id, course_code, attendance_date, attendance_time)
+            VALUES (%s, %s, CURDATE(), CURTIME())
+        """
+        cursor.execute(sql, (student_id, "CSC101"))
+        db.commit()
+
+        return f"""
+        <html>
+        <head><title>Success</title>
+        <style>
+            body {{ font-family: Arial; text-align: center; margin-top: 80px; background: #e6ffe6; }}
+            h1 {{ color: green; }}
+        </style>
+        </head>
+        <body>
+            <h1>✅ Attendance Marked Successfully!</h1>
+            <h2>Student: {student_name}</h2>
+            <h3>ID: {student_id}</h3>
+            <p>Time: {datetime.now().strftime('%H:%M:%S')}</p>
+            <br>
+            <a href="javascript:window.close()">Close Window</a>
+        </body>
+        </html>
+        """
+    
+    except Exception as e:
+        return f"<h2>❌ Error: {str(e)}</h2>", 500
+
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)
+
+    # VIEW ATTENDANCE
+@app.route('/attendance')
+def attendance():
+
+    sql = "SELECT * FROM attendance ORDER BY attendance_date DESC"
+
+    cursor.execute(sql)
+
+    records = cursor.fetchall()
+
+    return render_template('attendance.html', records=records)
+
+@app.route('/admin')
+def admin_dashboard():
+
+    cursor.execute("SELECT COUNT(*) AS total_students FROM students")
+    students = cursor.fetchone()
+
+    cursor.execute("SELECT COUNT(*) AS total_attendance FROM attendance")
+    attendance = cursor.fetchone()
+
+    return render_template(
+        'admin_dashboard.html',
+        students=students,
+        attendance=attendance
+    )
+
+# LECTURER LOGIN
+@app.route('/lecturer_login', methods=['GET', 'POST'])
+def lecturer_login():
+
+    if request.method == 'POST':
+
+        email = request.form['email']
+        password = request.form['password']
+
+        sql = "SELECT * FROM lecturers WHERE email=%s AND password=%s"
+
+        cursor.execute(sql, (email, password))
+
+        lecturer = cursor.fetchone()
+
+        if lecturer:
+            return redirect('/admin')
+
+        else:
+            return "Invalid Lecturer Credentials"
+
+    return render_template('lecturer_login.html')
+
+# EXPORT TO EXCEL
+@app.route('/export_attendance')
+def export_attendance():
+
+    sql = "SELECT * FROM attendance"
+
+    cursor.execute(sql)
+
+    data = cursor.fetchall()
+
+    df = pd.DataFrame(data)
+
+    file_path = 'attendance.xlsx'
+
+    df.to_excel(file_path, index=False)
+
+    return send_file(file_path, as_attachment=True)
+
+# STUDENT PROFILE
+@app.route('/student/<student_id>')
+def student_profile(student_id):
+
+    sql = "SELECT * FROM students WHERE student_id=%s"
+
+    cursor.execute(sql, (student_id,))
+
+    student = cursor.fetchone()
+
+    return render_template('student_profile.html', student=student) sfafafaf

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <h1>Welcome, {{ session.student_name }} 👋</h1>
+            <p class="role">Student Dashboard</p>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Attendance Summary -->
+            <div class="card highlight">
+                <div class="card-icon">📊</div>
+                <h2>Overall Attendance</h2>
+                <h1 style="color:#28a745; font-size: 48px;">{{ percentage }}%</h1>
+<p>{{ attended }} out of {{ total }} classes attended</p>
+                <p>Keep it up!</p>
+            </div>
+
+            <!-- How to Mark Attendance -->
+            <div class="card">
+                <div class="card-icon">📱</div>
+                <h2>How to Mark Attendance</h2>
+                <p><strong>Step 1:</strong> Wait for your lecturer to display the QR Code in class<br>
+                   <strong>Step 2:</strong> Open your phone camera and scan the QR Code</p>
+            </div>
+
+            <a href="/my_attendance" class="card">
+                <div class="card-icon">📋</div>
+                <h2>My Attendance History</h2>
+                <p>View detailed records</p>
+            </a>
+
+            <a href="/student/profile" class="card">
+                <div class="card-icon">👤</div>
+                <h2>My Profile</h2>
+                <p>View personal details</p>
+            </a>
+        </div>
+
+        <br><br>
+        <a href="/logout" class="btn btn-danger">Logout</a>
+    </div>
+</body>
+</html>

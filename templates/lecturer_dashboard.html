@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lecturer Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <div class="dashboard-container">
+        <div class="header">
+            <h1>Welcome, {{ session.lecturer_name or 'Lecturer' }} 👋</h1>
+            <p class="role">Lecturer Dashboard</p>
+        </div>
+
+        <div class="dashboard-grid">
+            <a href="/lecturer/generate_qr" class="card">
+                <div class="card-icon">📱</div>
+                <h2>Generate QR Code</h2>
+                <p>Create QR for today's class</p>
+            </a>
+
+            <a href="/attendance" class="card">
+                <div class="card-icon">📊</div>
+                <h2>View All Attendance</h2>
+                <p>Check student records</p>
+            </a>
+
+            <a href="/export_attendance" class="card">
+                <div class="card-icon">📥</div>
+                <h2>Export Report</h2>
+                <p>Download Excel File</p>
+            </a>
+
+            <a href="/lecturer/courses" class="card">
+                <div class="card-icon">📚</div>
+                <h2>Manage Courses</h2>
+                <p>View & Manage Courses</p>
+            </a>
+        </div>
+
+        <div style="text-align: center; margin-top: 40px;">
+            <a href="/logout" class="btn btn-danger">Logout</a>
+        </div>
+    </div>
+</body>
+</html>

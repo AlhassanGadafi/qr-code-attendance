@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Choose Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="login-choice-container">
+        <h1>Select Login Type</h1>
+        
+        <div class="choice-grid">
+            <a href="/student/login" class="choice-card student-card">
+                <h2>👨‍🎓 Student Login</h2>
+                <p>Mark your class attendance</p>
+            </a>
+
+            <a href="/lecturer/login" class="choice-card lecturer-card">
+                <h2>👨‍🏫 Lecturer Login</h2>
+                <p>Manage attendance and generate QR codes</p>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

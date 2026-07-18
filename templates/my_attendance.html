@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Attendance</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <h1>📋 My Attendance History</h1>
+        <p>Welcome, {{ session.student_name }}</p>
+
+        <!-- Attendance Percentage -->
+        {% if percentage is defined %}
+        <div style="background:#e8f5e9; padding:20px; border-radius:12px; text-align:center; margin:20px 0;">
+            <h2>📈 Attendance Rate: <strong>{{ percentage }}%</strong></h2>
+            <p>{{ attended }} out of {{ total }} classes attended</p>
+        </div>
+        {% endif %}
+
+        {% if records %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Course Code</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                <tr>
+                    <td>{{ record.attendance_date }}</td>
+                    <td>{{ record.attendance_time }}</td>
+                    <td>{{ record.course_code }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>You have no attendance records yet.</p>
+        {% endif %}
+
+        <br><br>
+        <a href="/student/dashboard" class="btn">← Back to Dashboard</a>
+        <a href="/logout" class="btn btn-danger">Logout</a>
+    </div>
+</body>
+</html>

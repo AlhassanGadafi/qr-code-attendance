@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Attendance System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <div class="hero">
+        <h1>QR Code Attendance Management System</h1>
+        <p class="subtitle">Efficient & Modern Attendance Tracking for Tertiary Institutions</p>
+    </div>
+
+    <div class="login-options">
+        <a href="/student/login" class="login-card student-card">
+            <h2>👨‍🎓 Student Login</h2>
+            <p>Scan QR Code to Mark Attendance</p>
+        </a>
+
+        <a href="/lecturer/login" class="login-card lecturer-card">
+            <h2>👨‍🏫 Lecturer Login</h2>
+            <p>Generate QR Codes & View Reports</p>
+        </a>
+    </div>
+
+    <div style="text-align: center; margin: 60px 0;">
+        <a href="/register" class="btn">New Student? Register Now</a>
+    </div>
+
+</body>
+</html>

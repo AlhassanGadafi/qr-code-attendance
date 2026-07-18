@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Courses</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <h1>📚 Manage Courses</h1>
+        <p class="subtitle">Lecturer Course Management</p>
+
+        <div class="card">
+            <h2>Your Courses</h2>
+            <ul style="text-align:left; max-width:400px; margin:20px auto;">
+                <li><strong>CSC101</strong> - Introduction to Computer Science</li>
+                <li><strong>CSC202</strong> - Data Structures & Algorithms</li>
+                <li><strong>CSC301</strong> - Database Systems</li>
+            </ul>
+        </div>
+
+        <div class="card" style="margin-top:20px;">
+            <h2>Add New Course</h2>
+            <p>(This feature is coming soon in future updates)</p>
+        </div>
+
+        <br><br>
+        <a href="/lecturer/dashboard" class="btn">← Back to Dashboard</a>
+    </div>
+</body>
+</html>

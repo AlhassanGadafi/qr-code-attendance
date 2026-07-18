@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate QR Code</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    {% include 'navbar.html' %}
+
+    <div class="form-container">
+        <h1>Generate QR Code</h1>
+
+        {% if qr_image %}
+            <div style="text-align:center; margin: 30px 0;">
+                <h3>Course: <strong>{{ course_code }}</strong></h3>
+                <p><strong>Valid until:</strong> {{ expires_at }}</p>
+                <img src="{{ url_for('static', filename='qr_codes/' + qr_image) }}" 
+                     alt="QR Code" style="width: 340px; border: 8px solid #2c3e50; border-radius: 12px;">
+                <br><br>
+                <a href="/lecturer/generate_qr" class="btn">Generate Another QR Code</a>
+            </div>
+        {% else %}
+            <form method="POST" style="max-width: 500px; margin: 0 auto;">
+                <label>Course Code</label>
+                <input type="text" name="course_code" placeholder="e.g. CSC101" required>
+                
+                <label>QR Valid For (minutes)</label>
+                <input type="number" name="duration" value="15" min="5" max="60" required>
+                
+                <button type="submit" class="btn">Generate QR Code</button>
+            </form>
+        {% endif %}
+
+        <br>
+        <a href="/lecturer/dashboard" class="btn">← Back to Dashboard</a>
+    </div>
+</body>
+</html>

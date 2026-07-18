@@ -1,0 +1,1 @@
+console.log("QR Attendance System Loaded Successfully");

@@ -1,0 +1,25 @@
+@app.route('/lecturer/generate_qr', methods=['GET', 'POST'])
+def lecturer_generate_qr():
+    if 'lecturer_logged_in' not in session:
+        return redirect('/lecturer/login')
+
+    if request.method == 'POST':
+        course_code = request.form.get('course_code')
+        duration = int(request.form.get('duration', 15))
+
+        expires_at = datetime.now() + timedelta(minutes=duration)
+        
+        local_ip = socket.gethostbyname(socket.gethostname())
+        qr_data = f"http://{local_ip}:5000/mark_attendance?course={course_code}&expires={expires_at.timestamp()}"
+
+        qr = segno.make_qr(qr_data)
+        filename = f"session_{course_code}_{datetime.now().strftime('%H%M')}.png"
+        filepath = os.path.join(QR_FOLDER, filename)
+        qr.save(filepath, scale=8)
+
+        return render_template('generate_qr.html', 
+                             qr_image=filename, 
+                             course_code=course_code,
+                             expires_at=expires_at.strftime("%H:%M"))
+
+    return render_template('generate_qr.html')   # Changed here

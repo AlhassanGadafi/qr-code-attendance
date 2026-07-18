@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <h1>👤 My Profile</h1>
+
+        {% if student %}
+        <div class="card" style="max-width: 500px; margin: 0 auto; padding: 40px;">
+            <h2>{{ student.fullname }}</h2>
+            <hr style="margin: 20px 0;">
+            
+            <p><strong>Student ID:</strong> {{ student.student_id }}</p>
+            <p><strong>Email:</strong> {{ student.email }}</p>
+            
+            <!-- Removed Account Created since column doesn't exist yet -->
+        </div>
+        {% else %}
+        <p>Profile information not found.</p>
+        {% endif %}
+
+        <br><br>
+        <a href="/student/dashboard" class="btn">← Back to Dashboard</a>
+        <a href="/logout" class="btn btn-danger">Logout</a>
+    </div>
+</body>
+</html>

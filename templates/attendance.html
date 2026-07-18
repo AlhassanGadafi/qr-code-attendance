@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Attendance Records</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <div class="dashboard-container">
+        <h1>📊 All Attendance Records</h1>
+        <p>Total Records: <strong>{{ records|length }}</strong></p>
+
+        {% if records %}
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Student ID</th>
+                    <th>Course Code</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in records %}
+                <tr>
+                    <td>{{ row.id }}</td>
+                    <td>{{ row.student_id }}</td>
+                    <td>{{ row.course_code }}</td>
+                    <td>{{ row.attendance_date }}</td>
+                    <td>{{ row.attendance_time }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>No attendance records found yet.</p>
+        {% endif %}
+
+        <br><br>
+        <a href="/lecturer/dashboard" class="btn">← Back to Dashboard</a>
+        <a href="/export_attendance" class="btn">📥 Export to Excel</a>
+        <a href="/logout" class="btn btn-danger">Logout</a>
+    </div>
+</body>
+</html>

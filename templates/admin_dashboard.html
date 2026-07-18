@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard</title>
+
+    <style>
+        body{
+            font-family:Arial;
+            background:#f4f4f4;
+            padding:30px;
+        }
+
+        .card{
+            background:white;
+            padding:30px;
+            margin:20px;
+            border-radius:10px;
+            box-shadow:0 0 10px rgba(0,0,0,0.1);
+            text-align:center;
+        }
+
+        h1{
+            text-align:center;
+        }
+    </style>
+</head>
+<body>
+  <h1>Admin Dashboard</h1>
+
+<div class="card">
+    <h2>Total Students</h2>
+    <h1>{{ students.total_students }}</h1>
+</div>
+
+<div class="card">
+    <h2>Total Attendance Records</h2>
+    <h1>{{ attendance.total_attendance }}</h1>
+</div>
+
+ <a href="/logout">
+    <button>Logout</button>
+</a>
+
+</body>
+</html>
