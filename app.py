@@ -64,18 +64,24 @@ def lecturer_login():
         email = request.form.get('email')
         password = request.form.get('password')
 
-        cur = db.cursor(cursor_factory=RealDictCursor)
-        cur.execute("SELECT * FROM lecturers WHERE email=%s AND password=%s", (email, password))
-        lecturer = cur.fetchone()
-        cur.close()
+        try:
+            cur = db.cursor(cursor_factory=RealDictCursor)
+            cur.execute("SELECT * FROM lecturers WHERE email=%s AND password=%s", (email, password))
+            lecturer = cur.fetchone()
+            cur.close()
 
-        if lecturer:
-            session['lecturer_logged_in'] = True
-            session['lecturer_id'] = lecturer['id']
-            session['lecturer_name'] = lecturer['fullname']
-            return redirect('/lecturer/dashboard')
-        else:
-            error = "Invalid Lecturer Email or Password"
+            if lecturer:
+                session['lecturer_logged_in'] = True
+                session['lecturer_id'] = lecturer['id']
+                session['lecturer_name'] = lecturer['fullname']
+                return redirect('/lecturer/dashboard')
+            else:
+                error = "Invalid Lecturer Email or Password"
+                return render_template('lecturer_login.html', error=error)
+        except Exception as e:
+            db.rollback()
+            print(f"Login error: {e}")
+            error = "Database error occurred"
             return render_template('lecturer_login.html', error=error)
 
     return render_template('lecturer_login.html', error=None)
@@ -127,18 +133,24 @@ def student_login():
         email = request.form.get('email')
         password = request.form.get('password')
 
-        cur = db.cursor(cursor_factory=RealDictCursor)
-        cur.execute("SELECT * FROM students WHERE email=%s AND password=%s", (email, password))
-        student = cur.fetchone()
-        cur.close()
+        try:
+            cur = db.cursor(cursor_factory=RealDictCursor)
+            cur.execute("SELECT * FROM students WHERE email=%s AND password=%s", (email, password))
+            student = cur.fetchone()
+            cur.close()
 
-        if student:
-            session['student_logged_in'] = True
-            session['student_id'] = student['student_id']
-            session['student_name'] = student['fullname']
-            return redirect('/student/dashboard')
-        else:
-            error = "Invalid Student Email or Password"
+            if student:
+                session['student_logged_in'] = True
+                session['student_id'] = student['student_id']
+                session['student_name'] = student['fullname']
+                return redirect('/student/dashboard')
+            else:
+                error = "Invalid Student Email or Password"
+                return render_template('student_login.html', error=error)
+        except Exception as e:
+            db.rollback()
+            print(f"Student login error: {e}")
+            error = "Database error occurred"
             return render_template('student_login.html', error=error)
 
     return render_template('student_login.html', error=None)
@@ -151,14 +163,18 @@ def student_dashboard():
     
     student_id = session.get('student_id')
     
-    cur = db.cursor(cursor_factory=RealDictCursor)
-    cur.execute("SELECT COUNT(*) as attended FROM attendance WHERE student_id = %s", (student_id,))
-    result = cur.fetchone()
-    attended = result['attended'] if result else 0
+    try:
+        cur = db.cursor(cursor_factory=RealDictCursor)
+        cur.execute("SELECT COUNT(*) as attended FROM attendance WHERE student_id = %s", (student_id,))
+        result = cur.fetchone()
+        attended = result['attended'] if result else 0
+        cur.close()
+    except Exception as e:
+        db.rollback()
+        attended = 0
     
     total_classes = 20
     percentage = round((attended / total_classes) * 100, 1) if total_classes > 0 else 0
-    cur.close()
     
     return render_template('student_dashboard.html', 
                            percentage=percentage,
@@ -189,42 +205,44 @@ def mark_attendance():
         """
 
     student_id = session.get('student_id')
-    cur = db.cursor(cursor_factory=RealDictCursor)
-
-    # Check duplicate
-    cur.execute("""
-        SELECT * FROM attendance 
-        WHERE student_id=%s AND course_code=%s AND attendance_date=CURDATE()
-    """, (student_id, course_code))
     
-    if cur.fetchone():
-        cur.close()
-        return f"""
-        <h2 style="color:orange; text-align:center; margin-top:100px;">
-            ⚠️ You have already marked attendance for {course_code} today.
-        </h2>
-        """
-
-    # Mark attendance
-    cur.execute("""
-        INSERT INTO attendance (student_id, course_code, attendance_date, attendance_time)
-        VALUES (%s, %s, CURDATE(), CURTIME())
-    """, (student_id, course_code))
-    db.commit()
-
-    # Calculate percentage
-    cur.execute("SELECT COUNT(*) as total FROM attendance WHERE student_id = %s", (student_id,))
-    total_attended = cur.fetchone()['total']
-    total_classes = 20
-    percentage = round((total_attended / total_classes) * 100, 1) if total_classes > 0 else 0
-
-    # Send Email
     try:
-        cur.execute("SELECT fullname, email FROM students WHERE student_id = %s", (student_id,))
-        student = cur.fetchone()
-        if student and student.get('email'):
-            msg = Message("✅ Attendance Marked Successfully", recipients=[student['email']])
-            msg.body = f"""
+        cur = db.cursor(cursor_factory=RealDictCursor)
+
+        # Check duplicate
+        cur.execute("""
+            SELECT * FROM attendance 
+            WHERE student_id=%s AND course_code=%s AND attendance_date=CURDATE()
+        """, (student_id, course_code))
+        
+        if cur.fetchone():
+            cur.close()
+            return f"""
+            <h2 style="color:orange; text-align:center; margin-top:100px;">
+                ⚠️ You have already marked attendance for {course_code} today.
+            </h2>
+            """
+
+        # Mark attendance
+        cur.execute("""
+            INSERT INTO attendance (student_id, course_code, attendance_date, attendance_time)
+            VALUES (%s, %s, CURDATE(), CURTIME())
+        """, (student_id, course_code))
+        db.commit()
+
+        # Calculate percentage
+        cur.execute("SELECT COUNT(*) as total FROM attendance WHERE student_id = %s", (student_id,))
+        total_attended = cur.fetchone()['total']
+        total_classes = 20
+        percentage = round((total_attended / total_classes) * 100, 1) if total_classes > 0 else 0
+
+        # Send Email
+        try:
+            cur.execute("SELECT fullname, email FROM students WHERE student_id = %s", (student_id,))
+            student = cur.fetchone()
+            if student and student.get('email'):
+                msg = Message("✅ Attendance Marked Successfully", recipients=[student['email']])
+                msg.body = f"""
 Dear {student['fullname']},
 
 Your attendance has been successfully marked.
@@ -237,26 +255,29 @@ Attendance Rate : {percentage}%
 Keep up the good work!
 
 QR Attendance System
-            """
-            mail.send(msg)
-    except:
-        pass
+                """
+                mail.send(msg)
+        except:
+            pass
 
-    cur.close()
+        cur.close()
 
-    return f"""
-    <div style="text-align:center; margin-top:80px; font-family:Arial;">
-        <h1 style="color:green;">✅ Attendance Marked Successfully!</h1>
-        <h2>Student ID: {student_id}</h2>
-        <h3>Course: {course_code}</h3>
-        <p>Time: {datetime.now().strftime('%H:%M:%S')}</p>
-        <br>
-        <h2 style="color:#007bff;">Your Current Attendance Rate: <strong>{percentage}%</strong></h2>
-        <p>({total_attended} out of {total_classes} classes)</p>
-        <br>
-        <a href="/student/dashboard" style="padding:12px 25px; background:#007bff; color:white; text-decoration:none; border-radius:8px;">Go to Dashboard</a>
-    </div>
-    """
+        return f"""
+        <div style="text-align:center; margin-top:80px; font-family:Arial;">
+            <h1 style="color:green;">✅ Attendance Marked Successfully!</h1>
+            <h2>Student ID: {student_id}</h2>
+            <h3>Course: {course_code}</h3>
+            <p>Time: {datetime.now().strftime('%H:%M:%S')}</p>
+            <br>
+            <h2 style="color:#007bff;">Your Current Attendance Rate: <strong>{percentage}%</strong></h2>
+            <p>({total_attended} out of {total_classes} classes)</p>
+            <br>
+            <a href="/student/dashboard" style="padding:12px 25px; background:#007bff; color:white; text-decoration:none; border-radius:8px;">Go to Dashboard</a>
+        </div>
+        """
+    except Exception as e:
+        db.rollback()
+        return f"<h2>Error: {str(e)}</h2>"
 
 
 # ===================== OTHER ROUTES =====================
@@ -276,10 +297,14 @@ def attendance():
     if 'lecturer_logged_in' not in session:
         return redirect('/lecturer/login')
     
-    cur = db.cursor(cursor_factory=RealDictCursor)
-    cur.execute("SELECT * FROM attendance ORDER BY attendance_date DESC, attendance_time DESC")
-    records = cur.fetchall()
-    cur.close()
+    try:
+        cur = db.cursor(cursor_factory=RealDictCursor)
+        cur.execute("SELECT * FROM attendance ORDER BY attendance_date DESC, attendance_time DESC")
+        records = cur.fetchall()
+        cur.close()
+    except Exception as e:
+        db.rollback()
+        records = []
     
     return render_template('attendance.html', records=records)
 
@@ -291,19 +316,22 @@ def my_attendance():
     
     student_id = session.get('student_id')
     
-    cur = db.cursor(cursor_factory=RealDictCursor)
-    cur.execute("""
-        SELECT * FROM attendance 
-        WHERE student_id = %s 
-        ORDER BY attendance_date DESC, attendance_time DESC
-    """, (student_id,))
-    records = cur.fetchall()
+    try:
+        cur = db.cursor(cursor_factory=RealDictCursor)
+        cur.execute("""
+            SELECT * FROM attendance 
+            WHERE student_id = %s 
+            ORDER BY attendance_date DESC, attendance_time DESC
+        """, (student_id,))
+        records = cur.fetchall()
+        cur.close()
+    except Exception as e:
+        db.rollback()
+        records = []
     
     total_classes = 20
     attended = len(records)
     percentage = round((attended / total_classes) * 100, 1) if total_classes > 0 else 0
-    
-    cur.close()
     
     return render_template('my_attendance.html', 
                          records=records, 
@@ -319,10 +347,14 @@ def student_profile():
     
     student_id = session.get('student_id')
     
-    cur = db.cursor(cursor_factory=RealDictCursor)
-    cur.execute("SELECT * FROM students WHERE student_id = %s", (student_id,))
-    student = cur.fetchone()
-    cur.close()
+    try:
+        cur = db.cursor(cursor_factory=RealDictCursor)
+        cur.execute("SELECT * FROM students WHERE student_id = %s", (student_id,))
+        student = cur.fetchone()
+        cur.close()
+    except Exception as e:
+        db.rollback()
+        student = None
     
     return render_template('student_profile.html', student=student)
 
@@ -345,6 +377,7 @@ def register():
             cur.close()
             return "Registration Successful! <a href='/student/login'>Go to Student Login</a>"
         except Exception as e:
+            db.rollback()
             cur.close()
             return f"Error: {str(e)}"
 
@@ -356,19 +389,23 @@ def export_attendance():
     if 'lecturer_logged_in' not in session:
         return redirect('/lecturer/login')
     
-    cur = db.cursor(cursor_factory=RealDictCursor)
-    cur.execute("""
-        SELECT a.attendance_date AS Date, 
-               a.attendance_time AS Time, 
-               a.student_id AS 'Student ID', 
-               s.fullname AS 'Student Name', 
-               a.course_code AS 'Course Code'
-        FROM attendance a
-        LEFT JOIN students s ON a.student_id = s.student_id
-        ORDER BY a.attendance_date DESC, a.attendance_time DESC
-    """)
-    data = cur.fetchall()
-    cur.close()
+    try:
+        cur = db.cursor(cursor_factory=RealDictCursor)
+        cur.execute("""
+            SELECT a.attendance_date AS Date, 
+                   a.attendance_time AS Time, 
+                   a.student_id AS 'Student ID', 
+                   s.fullname AS 'Student Name', 
+                   a.course_code AS 'Course Code'
+            FROM attendance a
+            LEFT JOIN students s ON a.student_id = s.student_id
+            ORDER BY a.attendance_date DESC, a.attendance_time DESC
+        """)
+        data = cur.fetchall()
+        cur.close()
+    except Exception as e:
+        db.rollback()
+        return f"Error: {str(e)}"
 
     if not data:
         return "No attendance records found."
