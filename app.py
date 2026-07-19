@@ -1,11 +1,11 @@
 from flask import Flask, render_template, request, send_file, redirect, url_for, session
-import mysql.connector
 import segno
 import os
 from datetime import datetime, timedelta
-import socket
 from flask_mail import Mail, Message
 from math import radians, cos, sin, asin, sqrt
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 app = Flask(__name__)
 app.secret_key = 'qr_attendance_secret_key_2026'
@@ -20,19 +20,12 @@ app.config['MAIL_DEFAULT_SENDER'] = 'alhassangadafi26@gmail.com'
 
 mail = Mail(app)
 
-# ===================== DATABASE =====================
 # ===================== DATABASE (PostgreSQL on Render) =====================
-import os
-import psycopg2
-
-# Get database URL from environment
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
 if DATABASE_URL:
-    # Use Render's PostgreSQL connection
     db = psycopg2.connect(DATABASE_URL)
 else:
-    # Fallback for local testing (use hardcoded values)
     db = psycopg2.connect(
         host="dpg-d9egd0rrjlhs73cd47v0-a",
         port=5432,
@@ -41,7 +34,6 @@ else:
         password="1EFkOsvTfRHG9zWTzL6tw2dNPQjJlgn2",
         sslmode='require'
     )
-
 
 QR_FOLDER = os.path.join('static', 'qr_codes')
 os.makedirs(QR_FOLDER, exist_ok=True)
@@ -72,15 +64,15 @@ def lecturer_login():
         email = request.form.get('email')
         password = request.form.get('password')
 
-        cur = db.cursor(dictionary=True)
+        cur = db.cursor(cursor_factory=RealDictCursor)
         cur.execute("SELECT * FROM lecturers WHERE email=%s AND password=%s", (email, password))
         lecturer = cur.fetchone()
         cur.close()
 
         if lecturer:
             session['lecturer_logged_in'] = True
-            session['lecturer_id'] = lecturer.get('id')
-            session['lecturer_name'] = lecturer.get('fullname')
+            session['lecturer_id'] = lecturer['id']
+            session['lecturer_name'] = lecturer['fullname']
             return redirect('/lecturer/dashboard')
         else:
             error = "Invalid Lecturer Email or Password"
@@ -112,7 +104,6 @@ def lecturer_generate_qr():
         
         public_url = "http://10.103.1.153:5000"
         
-        # ✅ QR Code points DIRECTLY to mark_attendance
         qr_data = f"{public_url}/mark_attendance?course={course_code}&expires={expires_at.timestamp()}"
 
         qr = segno.make_qr(qr_data)
@@ -136,7 +127,7 @@ def student_login():
         email = request.form.get('email')
         password = request.form.get('password')
 
-        cur = db.cursor(dictionary=True)
+        cur = db.cursor(cursor_factory=RealDictCursor)
         cur.execute("SELECT * FROM students WHERE email=%s AND password=%s", (email, password))
         student = cur.fetchone()
         cur.close()
@@ -160,7 +151,7 @@ def student_dashboard():
     
     student_id = session.get('student_id')
     
-    cur = db.cursor(dictionary=True)
+    cur = db.cursor(cursor_factory=RealDictCursor)
     cur.execute("SELECT COUNT(*) as attended FROM attendance WHERE student_id = %s", (student_id,))
     result = cur.fetchone()
     attended = result['attended'] if result else 0
@@ -198,7 +189,7 @@ def mark_attendance():
         """
 
     student_id = session.get('student_id')
-    cur = db.cursor(dictionary=True)
+    cur = db.cursor(cursor_factory=RealDictCursor)
 
     # Check duplicate
     cur.execute("""
@@ -285,7 +276,7 @@ def attendance():
     if 'lecturer_logged_in' not in session:
         return redirect('/lecturer/login')
     
-    cur = db.cursor(dictionary=True)
+    cur = db.cursor(cursor_factory=RealDictCursor)
     cur.execute("SELECT * FROM attendance ORDER BY attendance_date DESC, attendance_time DESC")
     records = cur.fetchall()
     cur.close()
@@ -300,7 +291,7 @@ def my_attendance():
     
     student_id = session.get('student_id')
     
-    cur = db.cursor(dictionary=True)
+    cur = db.cursor(cursor_factory=RealDictCursor)
     cur.execute("""
         SELECT * FROM attendance 
         WHERE student_id = %s 
@@ -328,7 +319,7 @@ def student_profile():
     
     student_id = session.get('student_id')
     
-    cur = db.cursor(dictionary=True)
+    cur = db.cursor(cursor_factory=RealDictCursor)
     cur.execute("SELECT * FROM students WHERE student_id = %s", (student_id,))
     student = cur.fetchone()
     cur.close()
@@ -344,7 +335,7 @@ def register():
         email = request.form.get('email')
         password = request.form.get('password')
 
-        cur = db.cursor(dictionary=True)
+        cur = db.cursor(cursor_factory=RealDictCursor)
         try:
             cur.execute("""
                 INSERT INTO students (student_id, fullname, email, password) 
@@ -365,7 +356,7 @@ def export_attendance():
     if 'lecturer_logged_in' not in session:
         return redirect('/lecturer/login')
     
-    cur = db.cursor(dictionary=True)
+    cur = db.cursor(cursor_factory=RealDictCursor)
     cur.execute("""
         SELECT a.attendance_date AS Date, 
                a.attendance_time AS Time, 
