@@ -21,11 +21,16 @@ app.config['MAIL_DEFAULT_SENDER'] = 'alhassangadafi26@gmail.com'
 mail = Mail(app)
 
 # ===================== DATABASE =====================
+import os
+import mysql.connector
+
+# Aiven MySQL Connection using Environment Variables
 db = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    password="0509050023",
-    database="qr_attendance_db",
+    host=os.environ.get('MYSQL_HOST'),
+    user=os.environ.get('MYSQL_USER'),
+    password=os.environ.get('MYSQL_PASSWORD'),
+    database=os.environ.get('MYSQL_DB'),
+    port=os.environ.get('MYSQL_PORT'),
     buffered=True
 )
 
