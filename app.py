@@ -27,11 +27,15 @@ import mysql.connector
 # Aiven MySQL Connection using Environment Variables
 import os
 
+# ===================== DATABASE =====================
+import os
+import mysql.connector
+
 db = mysql.connector.connect(
-    host=os.environ.get('DB_HOST', 'localhost'),
-    user=os.environ.get('DB_USER', 'root'),
-    password=os.environ.get('DB_PASSWORD', '0509050023'),
-    database=os.environ.get('DB_NAME', 'qr_attendance_db'),
+    host=os.environ.get('DB_HOST', 'b5roi8kbno6uipe5338-mysql.services.clever-cloud.com'),
+    user=os.environ.get('DB_USER', 'undjklwg31wilzpv'),
+    password=os.environ.get('DB_PASSWORD', 'zxwYOR88zlsuEVYdSBzp'),
+    database=os.environ.get('DB_NAME', 'b5roi8kbno6uipe5338'),
     port=os.environ.get('DB_PORT', 3306),
     buffered=True
 )
