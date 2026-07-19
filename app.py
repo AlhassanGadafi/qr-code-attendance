@@ -21,24 +21,27 @@ app.config['MAIL_DEFAULT_SENDER'] = 'alhassangadafi26@gmail.com'
 mail = Mail(app)
 
 # ===================== DATABASE =====================
+# ===================== DATABASE (PostgreSQL on Render) =====================
 import os
-import mysql.connector
+import psycopg2
 
-# Aiven MySQL Connection using Environment Variables
-import os
+# Get database URL from environment
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
-# ===================== DATABASE =====================
-import os
-import mysql.connector
+if DATABASE_URL:
+    # Use Render's PostgreSQL connection
+    db = psycopg2.connect(DATABASE_URL)
+else:
+    # Fallback for local testing (use hardcoded values)
+    db = psycopg2.connect(
+        host="dpg-d9egd0rrjlhs73cd47v0-a",
+        port=5432,
+        database="qr_attendance_bk9i",
+        user="qr_attendance_bk9i_user",
+        password="1EFkOsvTfRHG9zWTzL6tw2dNPQjJlgn2",
+        sslmode='require'
+    )
 
-db = mysql.connector.connect(
-    host=os.environ.get('DB_HOST', 'b5roi8kbno6uipe5338-mysql.services.clever-cloud.com'),
-    user=os.environ.get('DB_USER', 'undjklwg31wilzpv'),
-    password=os.environ.get('DB_PASSWORD', 'zxwYOR88zlsuEVYdSBzp'),
-    database=os.environ.get('DB_NAME', 'b5roi8kbno6uipe5338'),
-    port=os.environ.get('DB_PORT', 3306),
-    buffered=True
-)
 
 QR_FOLDER = os.path.join('static', 'qr_codes')
 os.makedirs(QR_FOLDER, exist_ok=True)
